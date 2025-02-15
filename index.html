@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Champions Trophy 2025</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/dplayer/dist/DPlayer.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: linear-gradient(to bottom, #000000, #0a0f1e); color: white; padding-bottom: 60px; min-height: 100vh; }
+        .header { width: 100%; height: 40px; background: linear-gradient(to right, #000428, #004e92); display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; right: 0; padding: 0 10px; z-index: 1000; }
+        .header img { width: 110px; }
+        .search-icon { font-size: 18px; cursor: pointer; color: white; }
+        .search-bar { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 40px; background: black; padding: 10px; color: white; border: none; }
+
+        /* Adjust Poster Position */
+        .poster { width: 100%; display: block; margin-top: 80px; cursor: pointer; }
+
+        .live-section { display: none; width: 100%; margin-top: 40px; }
+        .dplayer-container { width: 100%; aspect-ratio: 16/9; }
+        .live-menu { display: flex; width: 100%; overflow-x: auto; scrollbar-width: none; }
+        .menu-item { flex: 1; padding: 10px; text-align: center; color: white; background: rgba(255, 255, 255, 0.1); border-bottom: 2px solid transparent; cursor: pointer; transition: 0.3s; }
+        .menu-item.active { border-bottom: 2px solid #00A3FF; color: #00A3FF; }
+        .content { display: none; width: 100%; text-align: center; padding: 20px; }
+        .content.active { display: block; }
+
+        /* Channel List */
+        .channel-list { display: flex; flex-wrap: wrap; justify-content: center; padding: 10px; gap: 10px; }
+        .channel-item { 
+            width: calc(50% - 20px); 
+            aspect-ratio: 1/1; 
+            background: rgba(255, 255, 255, 0.1); 
+            border: 2px solid gold;
+            box-shadow: 0 0 10px gold;
+            border-radius: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            padding: 15px;
+            animation: heartbeat 2.5s infinite;
+        }
+        .channel-item img { width: 70%; border-radius: 10px; margin-bottom: 5px; }
+        .channel-item p { margin: 0; font-size: 14px; color: white; }
+
+        /* Heartbeat Animation */
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: linear-gradient(to right, #000428, #004e92); display: flex; justify-content: space-around; padding: 6px 0; }
+        .nav-item { text-align: center; color: rgba(255, 255, 255, 0.7); font-size: 13px; padding: 6px 10px; flex: 1; cursor: pointer; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 3px; }
+        .nav-item.active { color: #00A3FF; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <img src="https://i.ibb.co/Jw85KmL7/Picsart-25-02-14-09-42-18-444.jpg" alt="Logo">
+        <i class="fas fa-search search-icon" onclick="toggleSearch()"></i>
+        <input type="text" class="search-bar" placeholder="Search...">
+    </div>
+
+    <!-- Home Page Poster -->
+    <img src="https://i.ibb.co/0j9tXFzT/Vmake1739619446359.png" class="poster" id="homePoster" onclick="showLiveTV()">
+
+    <div class="live-section" id="liveSection">
+        <div class="dplayer-container" id="dplayer"></div>
+
+        <div class="live-menu">
+            <div class="menu-item active" onclick="switchTab(event, 'channels')">Channels</div>
+            <div class="menu-item" onclick="switchTab(event, 'live-chat')">Live Chat</div>
+        </div>
+
+        <div id="channels" class="content active">
+            <div class="channel-list" id="channelList"></div>
+        </div>
+
+        <div id="live-chat" class="content">
+            <h2>Live Chat</h2>
+            <p>Chat with other viewers in real time.</p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="showHome()"><i class="fas fa-home"></i> Home</div>
+        <div class="nav-item" onclick="showLiveTV()"><i class="fas fa-tv"></i> Live</div>
+        <div class="nav-item" onclick="showHighlights()"><i class="fas fa-film"></i> Highlights</div>
+    </div>
+
+    <script>
+        const dp = new DPlayer({
+            container: document.getElementById('dplayer'),
+            video: { url: '', type: 'auto' }
+        });
+
+        async function loadChannels() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/allroundertv/Jkk/refs/heads/main/data.json');
+                const data = await response.json();
+                const channelList = document.getElementById('channelList');
+                channelList.innerHTML = '';
+
+                if (data.channels && data.channels.length > 0) {
+                    data.channels.forEach(channel => {
+                        const channelItem = document.createElement('div');
+                        channelItem.className = 'channel-item';
+                        channelItem.innerHTML = `<img src="${channel.logo}" alt="${channel.name}"><p>${channel.name}</p>`;
+                        channelItem.addEventListener('click', () => {
+                            dp.switchVideo({ url: channel.url, type: 'auto' });
+                            dp.play();
+                        });
+                        channelList.appendChild(channelItem);
+                    });
+                } else {
+                    channelList.innerHTML = `<p>No channels found.</p>`;
+                }
+            } catch (error) {
+                console.error('Error loading channels:', error);
+                document.getElementById('channelList').innerHTML = `<p>Error fetching channels.</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadChannels);
+
+        function showHome() { 
+            document.getElementById('liveSection').style.display = 'none'; 
+            document.getElementById('homePoster').style.display = 'block'; 
+        }
+
+        function showLiveTV() { 
+            document.getElementById('liveSection').style.display = 'block'; 
+            document.getElementById('homePoster').style.display = 'none'; 
+        }
+
+        function showHighlights() { 
+            document.getElementById('liveSection').style.display = 'none'; 
+            document.getElementById('homePoster').style.display = 'none'; 
+        }
+
+        function switchTab(event, tabId) {
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function toggleSearch() {
+            let searchBar = document.querySelector('.search-bar');
+            searchBar.style.display = searchBar.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
+
+</body>
+</html>
